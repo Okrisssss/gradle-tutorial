@@ -1,0 +1,4 @@
+
+        Version: 1.0-SNAPSHOT
+        Buildtime: 10-04-2020 12:33:46
+        Application-name: com.gradletutorial.Application

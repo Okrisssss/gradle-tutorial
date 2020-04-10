@@ -1,0 +1,137 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'org.springframework.boot' version '2.2.2.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+
+    // Lombok
+    def lombok_version = "1.18.8"
+    compile("org.projectlombok:lombok:$lombok_version")
+    annotationProcessor("org.projectlombok:lombok:$lombok_version")
+
+    //Slf4j, Logback logging
+    def slf4j_api_version = "1.7.25"
+    compile("org.slf4j:slf4j-api:$slf4j_api_version")
+
+    compile group: 'com.googlecode.jsontoken', name: 'jsontoken', version: '1.1'
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+
+
+//    compile("org.acme:someDependency:1.0"){
+//        exclude group:'com.google.giava', module:'guava'
+//    }
+//    compile"com.google.guava:guava:15.0:cdi1.0"
+}
+
+
+
+task hello {
+    group 'greeting'
+    description 'Greating with you.'
+
+    //Configuration phase
+    println 'Hello from configuration phase'
+    ext.greeting = "Hey, how it\'s going?"
+
+
+    //Execution phase
+    doLast {
+        println 'Hello Gradle'
+    }
+    doLast {
+        println 'What\'s up!'
+    }
+    doFirst {
+        println 'Gradle tutorial'
+    }
+    doLast {
+        println "Greeting: $greeting"
+    }
+}
+
+
+task customJarFile(type: Jar, dependsOn: clean) {
+    group 'executable'
+    description 'Generate JAR file of the project'
+    manifest {
+        attributes 'Main-Class': 'com.gradletutorial.Application'
+    }
+    baseName = 'custom-jar-file'
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
+task runApp(type: JavaExec) {
+
+    group 'Execution'
+    description 'Run the main class with JavaExecTask'
+
+    classpath = sourceSets.main.runtimeClasspath
+    main = "com.gradletutorial.Application"
+}
+
+task prepareDirs {
+    doLast {
+        mkdir "/Users/piachimov/Desktop/work"
+    }
+}
+
+task copyJarFile(type: Copy, dependsOn: [prepareDirs, customJarFile]) {
+    group 'copy'
+    description 'Copy JAR file from Build folder and paste into Work folder on Desktop'
+    File jarFile = project.file("build/libs/custom-jar-file-0.0.1-SNAPSHOT.jar")
+    if (jarFile.exists()) {
+        from jarFile.getAbsolutePath() //source dir
+        into "/Users/piachimov/Desktop/work" //target dir
+    }
+}
+
+task onlyIfHello {
+    group 'greeting'
+    description 'Say greeting if only IF Value is true and Enabled true'
+    onlyIf { true }
+    doLast {
+        println 'Hello if true!'
+    }
+}
+
+onlyIfHello.enabled(false)
+
+task versionTxt() {
+    group 'executable'
+    description 'Create text file with application decription'
+    doLast {
+        new File("$projectDir/versionFolder", 'version.txt').text = """
+        Version: $version
+        Buildtime: ${new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date())}
+        Application-name: ${'com.gradletutorial.Application'}
+"""
+    }
+}
+
+task cleanTempFiles(type: Delete) {
+    group 'delete'
+    description 'Delete Version text file'
+    delete fileTree('versionFolder').matching {
+        include '**/*.txt'
+    }
+}
